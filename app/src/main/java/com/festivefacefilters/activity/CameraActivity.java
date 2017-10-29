@@ -84,6 +84,25 @@ public class CameraActivity extends AppCompatActivity {
             }
         });
         ivTakePic = (View) findViewById(R.id.capture_image);
+        ivTakePic.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mCameraSource.takePicture(new CameraSource.ShutterCallback() {
+                    @Override
+                    public void onShutter() {
+                        Log.d("PRI","Shutter");
+
+                    }
+                }, new CameraSource.PictureCallback() {
+                    @Override
+                    public void onPictureTaken(byte[] bytes) {
+                        Log.d("PRI","Taken");
+                        Bitmap b=BitmapFactory.decodeByteArray(bytes,0,bytes.length);
+                        ivBack.setImageBitmap(b);
+                    }
+                });
+            }
+        });
         camera_rotate = (ImageView) findViewById(R.id.rotate_camera);
         // Check for the camera permission before accessing the camera.  If the
         // permission is not granted yet, request permission.
@@ -94,12 +113,12 @@ public class CameraActivity extends AppCompatActivity {
             requestCameraPermission();
         }
 
-        ivTakePic.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                takePic();
-            }
-        });
+//        ivTakePic.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+////                takePic();
+//            }
+//        });
     }
 
     private void takePic()

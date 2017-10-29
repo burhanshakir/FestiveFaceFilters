@@ -144,8 +144,8 @@ public class CameraImageView extends ViewGroup
     @Override
     protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
 
-        int height = displayMetrics.heightPixels;
-        int width = displayMetrics.widthPixels;
+        int height = 320;//displayMetrics.heightPixels;
+        int width = 240;//displayMetrics.widthPixels;
         if (mCameraSource != null) {
             Size size = mCameraSource.getPreviewSize();
             if (size != null) {

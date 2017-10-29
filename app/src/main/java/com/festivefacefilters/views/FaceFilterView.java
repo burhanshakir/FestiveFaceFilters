@@ -53,6 +53,21 @@ public class FaceFilterView extends View
                 return scaleX(x);
             }
         }
+
+        /**
+         * Adjusts the y coordinate from the preview's coordinate system to the view coordinate
+         * system.
+         */
+        public float translateY(float y) {
+            return scaleY(y);
+        }
+
+        public void postInvalidate() {
+            mOverlay.postInvalidate();
+        }
+        public FaceFilterView getOverlay() {
+            return mOverlay;
+        }
     }
 
     public void clear() {

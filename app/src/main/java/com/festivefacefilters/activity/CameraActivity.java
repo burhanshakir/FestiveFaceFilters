@@ -10,9 +10,6 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.net.Uri;
-import android.os.Environment;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -32,10 +29,9 @@ import com.google.android.gms.vision.Tracker;
 import com.google.android.gms.vision.face.Face;
 import com.google.android.gms.vision.face.FaceDetector;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CameraActivity extends AppCompatActivity {
     private static final String TAG = "FaceTracker";
@@ -43,14 +39,14 @@ public class CameraActivity extends AppCompatActivity {
     private CameraSource mCameraSource = null;
     private CameraImageView mPreview;
     private FaceFilterView mFaceFilterView;
-
+    private List<Integer> draw=new ArrayList<>();
     private static final int RC_HANDLE_GMS = 9001;
     private static final int CAMERA_REQUEST = 900;
     // permission request codes need to be < 256
     private static final int RC_HANDLE_CAMERA_PERM = 2;
-
+    private int currFilter=0;
     private View ivTakePic;
-    private ImageView capturedPic, camera_rotate;
+    private ImageView capturedPic,ivBack, camera_rotate;
 
     //==============================================================================================
     // Activity Methods
@@ -63,12 +59,31 @@ public class CameraActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
+        draw.add(R.drawable.mask1);
+        draw.add(R.drawable.mask2);
+        draw.add(R.drawable.mask3);
+        draw.add(R.drawable.mask4);
 
         mPreview = (CameraImageView) findViewById(R.id.preview);
         mFaceFilterView = (FaceFilterView) findViewById(R.id.faceOverlay);
-
+        ivBack=(ImageView) findViewById(R.id.back);
+        ivBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                currFilter++;
+                if(currFilter==2)
+                    currFilter=0;
+            }
+        });
+        mPreview.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                currFilter++;
+                if(currFilter==draw.size())
+                    currFilter=0;
+            }
+        });
         ivTakePic = (View) findViewById(R.id.capture_image);
-        capturedPic = (ImageView) findViewById(R.id.ivClickedPic);
         camera_rotate = (ImageView) findViewById(R.id.rotate_camera);
         // Check for the camera permission before accessing the camera.  If the
         // permission is not granted yet, request permission.
@@ -326,7 +341,15 @@ public class CameraActivity extends AppCompatActivity {
         @Override
         public void onUpdate(FaceDetector.Detections<Face> detectionResults, Face face) {
             mOverlay.add(mFaceGraphic);
+            updateGraphic(mFaceGraphic);
             mFaceGraphic.updateFace(face);
+        }
+
+        private void updateGraphic(FaceGraphic mFaceGraphic) {
+            if(true)
+            {
+                mFaceGraphic.filter_temp=BitmapFactory.decodeResource(mFaceGraphic.getmOverlay().getResources(), draw.get(currFilter));
+            }
         }
 
         /**

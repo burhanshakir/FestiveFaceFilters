@@ -74,7 +74,7 @@ public class FaceGraphic extends FaceFilterView.Graphic {
         mBoxPaint.setColor(selectedColor);
         mBoxPaint.setStyle(Paint.Style.STROKE);
         mBoxPaint.setStrokeWidth(BOX_STROKE_WIDTH);
-        filter_temp= BitmapFactory.decodeResource(getmOverlay().getResources(), R.drawable.mask1);
+        filter_temp= BitmapFactory.decodeResource(getmOverlay().getResources(), R.drawable.mask3);
         filter=filter_temp;
     }
 

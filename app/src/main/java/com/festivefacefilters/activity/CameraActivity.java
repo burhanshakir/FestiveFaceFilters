@@ -6,13 +6,20 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.net.Uri;
+import android.os.Environment;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 
 import com.festivefacefilters.R;
 import com.festivefacefilters.views.CameraImageView;
@@ -25,7 +32,10 @@ import com.google.android.gms.vision.Tracker;
 import com.google.android.gms.vision.face.Face;
 import com.google.android.gms.vision.face.FaceDetector;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Date;
 
 public class CameraActivity extends AppCompatActivity {
     private static final String TAG = "FaceTracker";
@@ -35,8 +45,12 @@ public class CameraActivity extends AppCompatActivity {
     private FaceFilterView mFaceFilterView;
 
     private static final int RC_HANDLE_GMS = 9001;
+    private static final int CAMERA_REQUEST = 900;
     // permission request codes need to be < 256
     private static final int RC_HANDLE_CAMERA_PERM = 2;
+
+    private View ivTakePic;
+    private ImageView capturedPic, camera_rotate;
 
     //==============================================================================================
     // Activity Methods
@@ -52,6 +66,10 @@ public class CameraActivity extends AppCompatActivity {
 
         mPreview = (CameraImageView) findViewById(R.id.preview);
         mFaceFilterView = (FaceFilterView) findViewById(R.id.faceOverlay);
+
+        ivTakePic = (View) findViewById(R.id.capture_image);
+        capturedPic = (ImageView) findViewById(R.id.ivClickedPic);
+        camera_rotate = (ImageView) findViewById(R.id.rotate_camera);
         // Check for the camera permission before accessing the camera.  If the
         // permission is not granted yet, request permission.
         int rc = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
@@ -60,7 +78,34 @@ public class CameraActivity extends AppCompatActivity {
         } else {
             requestCameraPermission();
         }
+
+        ivTakePic.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                takePic();
+            }
+        });
     }
+
+    private void takePic()
+    {
+        ivTakePic.setVisibility(View.GONE);
+        mPreview.setVisibility(View.GONE);
+        camera_rotate.setVisibility(View.GONE);
+        capturedPic.setVisibility(View.VISIBLE);
+
+        Intent cameraIntent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+        startActivityForResult(cameraIntent, CAMERA_REQUEST);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == CAMERA_REQUEST && resultCode == Activity.RESULT_OK) {
+            Bitmap photo = (Bitmap) data.getExtras().get("data");
+            capturedPic.setImageBitmap(photo);
+        }
+    }
+
     /**
      * Handles the requesting of the camera permission.  This includes
      * showing a "Snackbar" message of why the permission is needed then

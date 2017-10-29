@@ -14,9 +14,7 @@ import java.util.Set;
  * Created by burhanuddinshakir on 29/10/17.
  */
 
-public class FaceFilterView extends View
-{
-
+public class FaceFilterView extends View {
     private final Object mLock = new Object();
     private int mPreviewWidth;
     private float mWidthScaleFactor = 1.0f;
@@ -25,10 +23,11 @@ public class FaceFilterView extends View
     private int mFacing = CameraSource.CAMERA_FACING_BACK;
     private Set<Graphic> mGraphics = new HashSet<>();
 
-    public FaceFilterView(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
-
+    /**
+     * Base class for a custom graphics object to be rendered within the graphic overlay.  Subclass
+     * this and implement the {@link Graphic#draw(Canvas)} method to define the
+     * graphics element.  Add instances to the overlay using {@link FaceFilterView#add(Graphic)}.
+     */
     public static abstract class Graphic {
         private FaceFilterView mOverlay;
 
@@ -36,22 +35,49 @@ public class FaceFilterView extends View
             mOverlay = overlay;
         }
 
+        /**
+         * Draw the graphic on the supplied canvas.  Drawing should use the following methods to
+         * convert to view coordinates for the graphics that are drawn:
+         * <ol>
+         * <li>{@link Graphic#scaleX(float)} and {@link Graphic#scaleY(float)} adjust the size of
+         * the supplied value from the preview scale to the view scale.</li>
+         * <li>{@link Graphic#translateX(float)} and {@link Graphic#translateY(float)} adjust the
+         * coordinate from the preview's coordinate system to the view coordinate system.</li>
+         * </ol>
+         *
+         * @param canvas drawing canvas
+         */
         public abstract void draw(Canvas canvas);
 
+        /**
+         * Adjusts a horizontal value of the supplied value from the preview scale to the view
+         * scale.
+         */
         public float scaleX(float horizontal) {
             return horizontal * mOverlay.mWidthScaleFactor;
         }
 
+        /**
+         * Adjusts a vertical value of the supplied value from the preview scale to the view scale.
+         */
         public float scaleY(float vertical) {
             return vertical * mOverlay.mHeightScaleFactor;
         }
 
+        /**
+         * Adjusts the x coordinate from the preview's coordinate system to the view coordinate
+         * system.
+         */
         public float translateX(float x) {
             if (mOverlay.mFacing == CameraSource.CAMERA_FACING_FRONT) {
                 return mOverlay.getWidth() - scaleX(x);
             } else {
                 return scaleX(x);
             }
+        }
+
+        public FaceFilterView getmOverlay(){
+            return mOverlay;
         }
 
         /**
@@ -65,11 +91,15 @@ public class FaceFilterView extends View
         public void postInvalidate() {
             mOverlay.postInvalidate();
         }
-        public FaceFilterView getOverlay() {
-            return mOverlay;
-        }
     }
 
+    public FaceFilterView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+    }
+
+    /**
+     * Removes all graphics from the overlay.
+     */
     public void clear() {
         synchronized (mLock) {
             mGraphics.clear();
@@ -77,6 +107,9 @@ public class FaceFilterView extends View
         postInvalidate();
     }
 
+    /**
+     * Adds a graphic to the overlay.
+     */
     public void add(Graphic graphic) {
         synchronized (mLock) {
             mGraphics.add(graphic);
@@ -125,5 +158,4 @@ public class FaceFilterView extends View
             }
         }
     }
-
 }

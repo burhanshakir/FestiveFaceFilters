@@ -7,28 +7,42 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Matrix;
+import android.graphics.Paint;
+import android.os.Environment;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.SparseArray;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
+import android.widget.Toast;
 
+import com.festivefacefilters.ObjectMover;
 import com.festivefacefilters.R;
+import com.festivefacefilters.SafeFaceDetector;
 import com.festivefacefilters.views.CameraImageView;
 import com.festivefacefilters.views.FaceFilterView;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GoogleApiAvailability;
 import com.google.android.gms.vision.CameraSource;
+import com.google.android.gms.vision.Detector;
+import com.google.android.gms.vision.Frame;
 import com.google.android.gms.vision.MultiProcessor;
 import com.google.android.gms.vision.Tracker;
 import com.google.android.gms.vision.face.Face;
 import com.google.android.gms.vision.face.FaceDetector;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,14 +53,16 @@ public class CameraActivity extends AppCompatActivity {
     private CameraSource mCameraSource = null;
     private CameraImageView mPreview;
     private FaceFilterView mFaceFilterView;
-    private List<Integer> draw=new ArrayList<>();
+    public static List<Integer> draw=new ArrayList<>();
     private static final int RC_HANDLE_GMS = 9001;
     private static final int CAMERA_REQUEST = 900;
     // permission request codes need to be < 256
     private static final int RC_HANDLE_CAMERA_PERM = 2;
-    private int currFilter=0;
+    public static int currFilter=0;
     private View ivTakePic;
+    static boolean SHOULD_UPDATE=true;
     private ImageView capturedPic,ivBack, camera_rotate;
+    FaceDetector detector;
 
     //==============================================================================================
     // Activity Methods
@@ -63,7 +79,6 @@ public class CameraActivity extends AppCompatActivity {
         draw.add(R.drawable.mask2);
         draw.add(R.drawable.mask3);
         draw.add(R.drawable.mask4);
-
         mPreview = (CameraImageView) findViewById(R.id.preview);
         mFaceFilterView = (FaceFilterView) findViewById(R.id.faceOverlay);
         ivBack=(ImageView) findViewById(R.id.back);
@@ -78,6 +93,7 @@ public class CameraActivity extends AppCompatActivity {
         mPreview.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                SHOULD_UPDATE=true;
                 currFilter++;
                 if(currFilter==draw.size())
                     currFilter=0;
@@ -87,6 +103,7 @@ public class CameraActivity extends AppCompatActivity {
         ivTakePic.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+//                mProgress.setVisibility(View.VISIBLE);
                 mCameraSource.takePicture(new CameraSource.ShutterCallback() {
                     @Override
                     public void onShutter() {
@@ -97,8 +114,12 @@ public class CameraActivity extends AppCompatActivity {
                     @Override
                     public void onPictureTaken(byte[] bytes) {
                         Log.d("PRI","Taken");
-                        Bitmap b=BitmapFactory.decodeByteArray(bytes,0,bytes.length);
-                        ivBack.setImageBitmap(b);
+                        final Bitmap b=BitmapFactory.decodeByteArray(bytes,0,bytes.length);
+                        Intent intent=new Intent(CameraActivity.this,ImageViewActivity.class);
+                        ObjectMover.put("BITMAP",bytes);
+                        startActivity(intent);
+                        //ivBack.setImageBitmap(b);
+
                     }
                 });
             }
@@ -120,6 +141,8 @@ public class CameraActivity extends AppCompatActivity {
 //            }
 //        });
     }
+
+
 
     private void takePic()
     {
@@ -148,7 +171,7 @@ public class CameraActivity extends AppCompatActivity {
     private void requestCameraPermission() {
         Log.w(TAG, "Camera permission is not granted. Requesting permission");
 
-        final String[] permissions = new String[]{Manifest.permission.CAMERA};
+        final String[] permissions = new String[]{Manifest.permission.CAMERA,Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
         if (!ActivityCompat.shouldShowRequestPermissionRationale(this,
                 Manifest.permission.CAMERA)) {
@@ -179,7 +202,7 @@ public class CameraActivity extends AppCompatActivity {
     private void createCameraSource() {
 
         Context context = getApplicationContext();
-        FaceDetector detector = new FaceDetector.Builder(context)
+        detector = new FaceDetector.Builder(context)
                 .setClassificationType(FaceDetector.ALL_CLASSIFICATIONS)
                 .setLandmarkType(FaceDetector.ALL_LANDMARKS)
                 .setMode(FaceDetector.ACCURATE_MODE)
@@ -187,7 +210,6 @@ public class CameraActivity extends AppCompatActivity {
         detector.setProcessor(
                 new MultiProcessor.Builder<>(new GraphicFaceTrackerFactory())
                         .build());
-
         if (!detector.isOperational()) {
             // Note: The first time that an app using face API is installed on a device, GMS will
             // download a native library to the device in order to do detection.  Usually this
@@ -365,8 +387,10 @@ public class CameraActivity extends AppCompatActivity {
         }
 
         private void updateGraphic(FaceGraphic mFaceGraphic) {
-            if(true)
+            if(SHOULD_UPDATE)
             {
+                SHOULD_UPDATE=false;
+
                 mFaceGraphic.filter_temp=BitmapFactory.decodeResource(mFaceGraphic.getmOverlay().getResources(), draw.get(currFilter));
             }
         }
@@ -389,5 +413,10 @@ public class CameraActivity extends AppCompatActivity {
         public void onDone() {
             mOverlay.remove(mFaceGraphic);
         }
+    }
+    @Override
+    public void onBackPressed() {
+        if(ivBack.getVisibility() == View.VISIBLE)
+        ivBack.setVisibility(View.GONE);
     }
 }
